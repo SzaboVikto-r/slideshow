@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMW Slideshow – dummy.viktor56szabo.workers.dev</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141418;
+      --card: #1a1a20;
+      --border: #2a2a35;
+      --accent: #c8a84b;
+      --accent2: #e8c97a;
+      --text: #e8e6e0;
+      --muted: #888890;
+      --danger: #e05050;
+      --ok: #5cb85c;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .nav-brand span { color: var(--text); font-weight: 300; }
+    .nav-badge {
+      background: var(--accent);
+      color: #0d0d0f;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 4px 10px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+
+    /* HERO */
+    .hero {
+      padding: 36px 40px 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .hero-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+    .hero-title em { display: block; color: var(--accent); font-style: normal; }
+    .hero-price { text-align: right; }
+    .price-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+    .price-value { font-family: 'Barlow Condensed', sans-serif; font-size: 2.4rem; font-weight: 700; color: var(--accent); }
+    .price-currency { font-size: 1rem; font-weight: 300; color: var(--muted); }
+
+    /* STATUS BAR */
+    #status-bar {
+      max-width: 1200px;
+      margin: 14px auto 0;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    #status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    #status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+    #status-dot.ok     { background: var(--ok); }
+    #status-dot.err    { background: var(--danger); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* MAIN GRID */
+    main {
+      max-width: 1200px;
+      margin: 22px auto 0;
+      padding: 0 40px 60px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* SLIDESHOW */
+    .slideshow-wrap { position: relative; }
+    .slideshow {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--card);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      border-radius: 4px;
+      cursor: crosshair;
+    }
+    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.55s ease; }
+    .slide.active { opacity: 1; }
+    .slide img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s cubic-bezier(.25,.46,.45,.94);
+    }
+    /* ZOOM ON HOVER */
+    .slideshow:hover .slide.active img { transform: scale(1.06); }
+
+    .slide-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 40px 20px 14px;
+      background: linear-gradient(transparent, rgba(0,0,0,.72));
+      font-size: 0.76rem;
+      color: rgba(255,255,255,.75);
+      letter-spacing: 0.05em;
+      pointer-events: none;
+    }
+
+    /* skeleton */
+    .skeleton {
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, var(--card) 25%, var(--border) 50%, var(--card) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:100%} 100%{background-position:-100%} }
+
+    /* ARROWS */
+    .nav-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      z-index: 10;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #fff;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+      backdrop-filter: blur(6px);
+    }
+    .nav-arrow:hover { background: var(--accent); color: #000; transform: translateY(-50%) scale(1.08); }
+    .nav-arrow.prev { left: 14px; }
+    .nav-arrow.next { right: 14px; }
+    .nav-arrow svg { width: 20px; height: 20px; }
+
+    /* COUNTER */
+    .slide-counter {
+      position: absolute; top: 14px; right: 16px; z-index: 10;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem; letter-spacing: 0.12em;
+      color: rgba(255,255,255,.8);
+      background: rgba(0,0,0,.45);
+      padding: 4px 10px; border-radius: 2px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* PROGRESS BAR */
+    .autoplay-bar {
+      position: absolute; bottom: 0; left: 0;
+      height: 3px; background: var(--accent);
+      width: 0%; transition: width .1s linear; z-index: 11;
+    }
+
+    /* DOTS */
+    .dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--border); cursor: pointer;
+      transition: background .2s, transform .2s;
+      border: none; padding: 0;
+    }
+    .dot.active { background: var(--accent); transform: scale(1.4); }
+    .dot:hover  { background: var(--accent2); }
+
+    /* THUMBS */
+    .thumbs { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 12px; }
+    .thumb {
+      aspect-ratio: 4/3; overflow: hidden; border-radius: 2px;
+      cursor: pointer; border: 2px solid transparent;
+      transition: border-color .2s, opacity .2s;
+      background: var(--card);
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb.active { border-color: var(--accent); }
+    .thumb:hover  { opacity: .85; }
+
+    /* CONTROLS */
+    .controls-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .ctrl-btn {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 18px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px;
+      transition: background .2s, border-color .2s;
+    }
+    .ctrl-btn:hover { background: var(--border); }
+    .ctrl-btn.active-ctrl { border-color: var(--accent); color: var(--accent); }
+    .source-note { margin-left: auto; font-size: .72rem; color: var(--muted); }
+    .source-note a { color: var(--accent); text-decoration: none; }
+    .source-note a:hover { text-decoration: underline; }
+
+    /* SIDEBAR */
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .info-card-header {
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+    }
+    .specs-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .spec-item {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .spec-item:nth-child(even) { border-right: none; }
+    .spec-item:last-child,
+    .spec-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+    .spec-label { font-size: .67rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+    .spec-value { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 600; }
+    .spec-value.accent { color: var(--accent); }
+
+    .feature-list { padding: 8px 0; max-height: 240px; overflow-y: auto; }
+    .feature-list::-webkit-scrollbar { width: 4px; }
+    .feature-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .feature-item {
+      padding: 7px 18px; font-size: .8rem;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .feature-item:last-child { border-bottom: none; }
+    .feature-item:hover { background: rgba(200,168,75,.05); }
+    .feature-icon { color: var(--accent); flex-shrink: 0; }
+
+    .desc-box { padding: 14px 18px; font-size: .81rem; line-height: 1.7; color: var(--text); }
+
+    .cta-btn {
+      display: block; width: 100%; padding: 16px;
+      background: var(--accent); color: #0d0d0f;
+      border: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: .2em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px;
+      transition: background .2s, transform .1s;
+      text-align: center; text-decoration: none;
+    }
+    .cta-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+
+    /* DATA SOURCE BANNER */
+    .data-source-banner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 14px 40px;
+      background: rgba(200,168,75,.05);
+      border-top: 1px solid var(--border);
+      font-size: .74rem; color: var(--muted);
+      line-height: 1.7;
+    }
+    .data-source-banner strong { color: var(--accent); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center; padding: 18px;
+      font-size: .7rem; color: var(--muted); letter-spacing: .08em;
+    }
+
+    @media (max-width: 860px) {
+      main { grid-template-columns: 1fr; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-price { text-align: left; }
+      nav, .hero, main, #status-bar, .data-source-banner { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand" id="nav-brand">BMW<span> Slideshow</span></div>
+  <div class="nav-badge">Hirdetés</div>
+</nav>
+
+<div class="hero">
+  <div>
+    <div class="hero-title">
+      <em id="hero-title-main">Betöltés…</em>
+      <span id="hero-title-sub"></span>
+    </div>
+  </div>
+  <div class="hero-price">
+    <div class="price-label">Vételár</div>
+    <div class="price-value" id="hero-price">— <span class="price-currency">Ft</span></div>
+  </div>
+</div>
+
+<div id="status-bar">
+  <div id="status-dot" class="loading"></div>
+  <span id="status-text">Kapcsolódás: dummy.viktor56szabo.workers.dev …</span>
+</div>
+
+<main>
+  <!-- SLIDESHOW -->
+  <div class="slideshow-wrap">
+    <div class="slideshow" id="slideshow">
+      <div class="slide active"><div class="skeleton"></div></div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="controls-row">
+      <button class="ctrl-btn active-ctrl" id="btn-autoplay">⏸ Auto</button>
+      <button class="ctrl-btn" id="btn-fullscreen">⛶ Teljes</button>
+      <div class="source-note">
+        Forrás: <a href="https://dummy.viktor56szabo.workers.dev/" target="_blank">dummy.viktor56szabo.workers.dev</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="info-card">
+      <div class="info-card-header">Műszaki adatok</div>
+      <div class="specs-grid" id="specs-grid">
+        <div class="spec-item"><div class="spec-label">Betöltés…</div><div class="spec-value">—</div></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header">Felszereltség</div>
+      <div class="feature-list" id="feature-list">
+        <div class="feature-item" style="color:var(--muted)">Betöltés…</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header">Leírás</div>
+      <div class="desc-box" id="desc-box" style="color:var(--muted)">Betöltés…</div>
+    </div>
+
+    <a class="cta-btn" id="cta-btn" href="https://dummy.viktor56szabo.workers.dev/" target="_blank">
+      Hirdetés megtekintése →
+    </a>
+  </div>
+</main>
+
+<div class="data-source-banner">
+  <strong>Adatforrás és kockázatkezelés:</strong>
+  Az összes adat és kép futásidőben töltődik be a <strong>dummy.viktor56szabo.workers.dev</strong> Cloudflare Worker API-ból.
+  A HTML oldal maga csak statikus fájl – minden dinamikus tartalom a külső forrásból érkezik.<br>
+  <strong>Kockázatkezelés:</strong>
+  (1) Ha az API nem elérhető (hálózati hiba, Worker leállás), a hibakezelő a státuszsávban jelzi a problémát, és a slideshow üres helyett hibaüzenetet mutat.
+  (2) A HTML-parsolás rugalmasan kezeli a forrás szerkezetének változásait – a képek, árak és adatok külön szelektorokkal kerülnek kinyerésre, ha egy mező hiányzik, az alapértelmezett értékkel helyettesítődik.
+  (3) Az egyes képek <code>onerror</code> eseménnyel egyenként is fallback-elnek.
+  (4) A Worker maga is cacheli a GitHub forrást 5 percre, így egy esetleges upstream kiesés sem okoz azonnali hibát.
+</div>
+
+<footer id="footer">© BMW Slideshow · Forrás: dummy.viktor56szabo.workers.dev · Betöltve: —</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// KONFIG
+// ═══════════════════════════════════════════════════
+const API_URL = 'https://dummy.viktor56szabo.workers.dev/';
+
+// A Worker HTML-t ad vissza – innen parsoljuk ki az adatokat és képeket
+// A képek a Dummy_HTML repóból jönnek: raw.githubusercontent.com
+const RAW_BASE = 'https://raw.githubusercontent.com/SzaboVikto-r/Dummy_HTML/main/';
+
+// ═══════════════════════════════════════════════════
+// SLIDESHOW ENGINE
+// ═══════════════════════════════════════════════════
+const slideshowEl = document.getElementById('slideshow');
+const dotsEl      = document.getElementById('dots');
+const thumbsEl    = document.getElementById('thumbs');
+const statusDot   = document.getElementById('status-dot');
+const statusText  = document.getElementById('status-text');
+
+let slides = [], current = 0, autoplay = true;
+let autoplayTimer = null, progressTimer = null, progressVal = 0;
+const INTERVAL = 4500;
+
+function buildSlides(images) {
+  slideshowEl.innerHTML = '';
+  slides = [];
+
+  images.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide' + (i === 0 ? ' active' : '');
+
+    const el = document.createElement('img');
+    el.src = img.url;
+    el.alt = img.caption || '';
+    el.loading = i === 0 ? 'eager' : 'lazy';
+    el.onerror = () => { el.src = `https://picsum.photos/seed/bmw${i}/1200/750`; };
+
+    const cap = document.createElement('div');
+    cap.className = 'slide-caption';
+    cap.textContent = img.caption || '';
+
+    div.appendChild(el);
+    div.appendChild(cap);
+    slideshowEl.appendChild(div);
+    slides.push(div);
+  });
+
+  // Progress bar
+  const bar = document.createElement('div');
+  bar.className = 'autoplay-bar';
+  bar.id = 'autoplay-bar';
+  slideshowEl.appendChild(bar);
+
+  // Arrows
+  ['prev','next'].forEach(dir => {
+    const btn = document.createElement('button');
+    btn.className = `nav-arrow ${dir}`;
+    btn.setAttribute('aria-label', dir === 'prev' ? 'Előző' : 'Következő');
+    btn.innerHTML = dir === 'prev'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    btn.addEventListener('click', () => navigate(dir === 'prev' ? -1 : 1));
+    slideshowEl.appendChild(btn);
+  });
+
+  // Counter
+  const ctr = document.createElement('div');
+  ctr.className = 'slide-counter';
+  ctr.id = 'counter';
+  slideshowEl.appendChild(ctr);
+
+  buildDots(images.length);
+  buildThumbs(images);
+  updateUI();
+  if (autoplay) startAutoplay();
+}
+
+function buildDots(n) {
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.setAttribute('aria-label', `${i+1}. kép`);
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  }
+}
+
+function buildThumbs(images) {
+  thumbsEl.innerHTML = '';
+  images.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb' + (i === 0 ? ' active' : '');
+    const el = document.createElement('img');
+    el.src = img.url;
+    el.alt = img.caption || '';
+    el.loading = 'lazy';
+    el.onerror = () => { el.src = `https://picsum.photos/seed/bmwt${i}/300/225`; };
+    div.appendChild(el);
+    div.addEventListener('click', () => goTo(i));
+    thumbsEl.appendChild(div);
+  });
+}
+
+function goTo(idx) {
+  if (idx === current || slides.length === 0) return;
+  slides[current].classList.remove('active');
+  document.querySelectorAll('.dot')[current]?.classList.remove('active');
+  document.querySelectorAll('.thumb')[current]?.classList.remove('active');
+  current = (idx + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  document.querySelectorAll('.dot')[current]?.classList.add('active');
+  document.querySelectorAll('.thumb')[current]?.classList.add('active');
+  updateUI();
+  resetProgress();
+}
+
+function navigate(dir) {
+  goTo(current + dir);
+  if (autoplay) { clearAutoplay(); startAutoplay(); }
+}
+
+function updateUI() {
+  const ctr = document.getElementById('counter');
+  if (ctr) ctr.textContent = `${current + 1} / ${slides.length}`;
+}
+
+function startAutoplay() {
+  clearAutoplay(); resetProgress();
+  autoplayTimer = setInterval(() => navigate(1), INTERVAL);
+}
+
+function clearAutoplay() {
+  clearInterval(autoplayTimer);
+  clearInterval(progressTimer);
+  progressVal = 0;
+  const bar = document.getElementById('autoplay-bar');
+  if (bar) bar.style.width = '0%';
+}
+
+function resetProgress() {
+  clearInterval(progressTimer);
+  progressVal = 0;
+  const bar = document.getElementById('autoplay-bar');
+  if (bar) bar.style.width = '0%';
+  if (!autoplay) return;
+  progressTimer = setInterval(() => {
+    progressVal += 100 / (INTERVAL / 100);
+    const b = document.getElementById('autoplay-bar');
+    if (b) b.style.width = Math.min(progressVal, 100) + '%';
+    if (progressVal >= 100) clearInterval(progressTimer);
+  }, 100);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  navigate(-1);
+  if (e.key === 'ArrowRight') navigate(1);
+});
+
+// Touch swipe
+let touchStartX = 0;
+slideshowEl.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+slideshowEl.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) navigate(dx < 0 ? 1 : -1);
+});
+
+// Autoplay toggle
+document.getElementById('btn-autoplay').addEventListener('click', function() {
+  autoplay = !autoplay;
+  this.textContent = autoplay ? '⏸ Auto' : '▶ Auto';
+  this.classList.toggle('active-ctrl', autoplay);
+  if (autoplay) startAutoplay(); else clearAutoplay();
+});
+
+// Fullscreen
+document.getElementById('btn-fullscreen').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.querySelector('.slideshow-wrap')?.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// HTML PARSOLÁS – adatok kinyerése a Worker válaszból
+// ═══════════════════════════════════════════════════
+
+/**
+ * A dummy.viktor56szabo.workers.dev HTML-t ad vissza.
+ * Ebből DOMParser-rel kinyerjük:
+ *  - cím (h1)
+ *  - ár
+ *  - műszaki adatok (dt/dd párok)
+ *  - felszereltség (li elemek)
+ *  - leírás szöveg
+ *  - képek (a Dummy_HTML repó .jpg fájljai)
+ *
+ * Kockázatkezelés: minden selector try/catch-ben fut,
+ * ha a forrás struktúrája változik, az adott mező
+ * alapértelmezett értékkel helyettesítődik.
+ */
+function parseWorkerHTML(htmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, 'text/html');
+
+  // ── Cím ──
+  let title = '', subtitle = '';
+  try {
+    const h1 = doc.querySelector('h1');
+    if (h1) {
+      const full = h1.textContent.trim();
+      // "BMW 3-AS SOROZAT 318d Sport" → split make/model
+      const parts = full.split(' ');
+      title    = parts.slice(0, 3).join(' ');
+      subtitle = parts.slice(3).join(' ');
+    }
+  } catch(e) {}
+
+  // ── Ár ──
+  let price = '—';
+  try {
+    // Keresünk valamit ami "X Ft" alakú, pl "5 990 000 Ft"
+    const allText = doc.body.textContent;
+    const priceMatch = allText.match(/([\d\s]+)\s*Ft/);
+    if (priceMatch) {
+      price = priceMatch[1].trim().replace(/\s+/g, ' ') + ' Ft';
+    }
+  } catch(e) {}
+
+  // ── Műszaki adatok ──
+  const specs = {};
+  try {
+    // dt/dd párok
+    const dts = doc.querySelectorAll('dt');
+    dts.forEach(dt => {
+      const dd = dt.nextElementSibling;
+      if (dd && dd.tagName === 'DD') {
+        specs[dt.textContent.trim()] = dd.textContent.trim();
+      }
+    });
+    // Ha nincs dt/dd, próbáljuk a táblázatos li szövegeket
+    if (Object.keys(specs).length === 0) {
+      // Az "Alapadatok" szekció div párok
+      const divPairs = doc.querySelectorAll('.spec-row, .data-row');
+      divPairs.forEach(row => {
+        const cells = row.querySelectorAll('td, div');
+        if (cells.length >= 2) specs[cells[0].textContent.trim()] = cells[1].textContent.trim();
+      });
+    }
+  } catch(e) {}
+
+  // Mindig legyenek alapadatok a HTML-ből kinyerve szöveg alapján
+  const bodyText = doc.body.textContent;
+  const specFallbacks = [
+    ['Évjárat',      /Évjárat\s+([\d\/]+)/],
+    ['Km-óra',       /Km-óra állás\s+([\d\s]+km)/],
+    ['Üzemanyag',    /Üzemanyag\s+(\w+)/],
+    ['Teljesítmény', /Teljesítmény\s+([\d\s\w\/]+LE)/],
+    ['Kivitel',      /Kivitel\s+(\w+)/],
+    ['Szín',         /Szín\s+([^\n]+)/],
+    ['Váltó',        /Sebességváltó\s+([^\n]+)/],
+    ['Műszaki vizsga', /Műszaki vizsga érvényes\s+([\d\/]+)/],
+  ];
+  specFallbacks.forEach(([label, rx]) => {
+    if (!specs[label]) {
+      try {
+        const m = bodyText.match(rx);
+        if (m) specs[label] = m[1].trim();
+      } catch(e) {}
+    }
+  });
+
+  // ── Felszereltség ──
+  const features = [];
+  try {
+    // A felszereltség li elemek
+    doc.querySelectorAll('li').forEach(li => {
+      const t = li.textContent.trim();
+      if (t && t.length > 2 && t.length < 80) features.push(t);
+    });
+    // Ha nincs li, próbáljuk a ✓ jelekkel
+    if (features.length === 0) {
+      const checkMatches = bodyText.match(/✓\s+([^\n✓]+)/g);
+      if (checkMatches) checkMatches.forEach(m => features.push(m.replace(/^✓\s*/, '').trim()));
+    }
+  } catch(e) {}
+
+  // ── Leírás ──
+  let description = '';
+  try {
+    // "Leírás" fejléc utáni szöveg keresése
+    const headings = doc.querySelectorAll('h2, h3');
+    headings.forEach(h => {
+      if (h.textContent.includes('Leírás') || h.textContent.includes('leírás')) {
+        let next = h.nextElementSibling;
+        while (next && !next.matches('h2,h3')) {
+          description += next.textContent.trim() + ' ';
+          next = next.nextElementSibling;
+        }
+      }
+    });
+    if (!description) {
+      // Utolsó paragrafus
+      const paras = doc.querySelectorAll('p');
+      if (paras.length > 0) description = paras[paras.length - 1].textContent.trim();
+    }
+  } catch(e) {}
+
+  // ── Képek kinyerése ──
+  // A képek a Dummy_HTML GitHub repóban vannak (23456794.jpg … 23456806.jpg)
+  // A Worker HTML-ben img src attribútumokban, vagy a RAW_BASE URL-jeiből.
+  const images = [];
+  try {
+    doc.querySelectorAll('img').forEach((img, i) => {
+      let src = img.getAttribute('src') || '';
+      // Ha relatív vagy data: URL, kihagyjuk
+      if (!src || src.startsWith('data:') || src.length < 5) return;
+      // Ha nem abszolút, a RAW_BASE-hez ragasztjuk
+      if (!src.startsWith('http')) src = RAW_BASE + src.replace(/^\//, '');
+      images.push({
+        url: src,
+        caption: img.getAttribute('alt') || `${title} – ${i + 1}. fotó`,
+      });
+    });
+  } catch(e) {}
+
+  // Ha a HTML-ből nem jöttek képek, a Dummy_HTML repó ismert .jpg fájljait használjuk
+  if (images.length === 0) {
+    const knownFiles = [
+      '23456794','23456795','23456796','23456797',
+      '23456798','23456799','23456800','23456802',
+      '23456803','23456804','23456805','23456806',
+    ];
+    knownFiles.forEach((name, i) => {
+      images.push({
+        url: RAW_BASE + name + '.jpg',
+        caption: `${title || 'BMW'} – ${i + 1}. fotó`,
+      });
+    });
+  }
+
+  return { title, subtitle, price, specs, features, description, images };
+}
+
+// ═══════════════════════════════════════════════════
+// UI FELTÖLTÉSE
+// ═══════════════════════════════════════════════════
+function applyData(data) {
+  // Fejléc
+  const displayTitle = data.title || 'BMW';
+  document.getElementById('nav-brand').innerHTML =
+    `${displayTitle.split(' ')[0] || 'BMW'}<span> ${displayTitle.split(' ').slice(1).join(' ') || 'Slideshow'}</span>`;
+  document.getElementById('hero-title-main').textContent = data.title || 'BMW';
+  document.getElementById('hero-title-sub').textContent  = data.subtitle || '';
+  document.getElementById('hero-price').innerHTML = `${data.price} <span class="price-currency"></span>`;
+
+  // Specs
+  const specsEl = document.getElementById('specs-grid');
+  specsEl.innerHTML = '';
+  const specEntries = Object.entries(data.specs).slice(0, 8);
+  if (specEntries.length === 0) {
+    specsEl.innerHTML = '<div class="spec-item" style="grid-column:1/-1;color:var(--muted);padding:14px 18px;">Nincs adat</div>';
+  } else {
+    specEntries.forEach(([label, value], i) => {
+      const div = document.createElement('div');
+      div.className = 'spec-item';
+      div.innerHTML = `<div class="spec-label">${label}</div><div class="spec-value${i===1?' accent':''}">${value}</div>`;
+      specsEl.appendChild(div);
+    });
+  }
+
+  // Features
+  const featEl = document.getElementById('feature-list');
+  featEl.innerHTML = '';
+  if (data.features.length === 0) {
+    featEl.innerHTML = '<div class="feature-item" style="color:var(--muted)">Nincs felszereltség-adat</div>';
+  } else {
+    data.features.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'feature-item';
+      div.innerHTML = `<span class="feature-icon">✦</span>${f}`;
+      featEl.appendChild(div);
+    });
+  }
+
+  // Leírás
+  const descEl = document.getElementById('desc-box');
+  descEl.textContent = data.description || 'Leírás nem érhető el.';
+  descEl.style.color = data.description ? 'var(--text)' : 'var(--muted)';
+
+  // Footer
+  document.getElementById('footer').textContent =
+    `© BMW Slideshow · Forrás: dummy.viktor56szabo.workers.dev · Betöltve: ${new Date().toLocaleString('hu-HU')}`;
+
+  document.title = `${data.title || 'BMW'} – Slideshow`;
+}
+
+// ═══════════════════════════════════════════════════
+// BETÖLTÉS
+// ═══════════════════════════════════════════════════
+async function load() {
+  statusDot.className = 'loading';
+  statusText.textContent = `Kapcsolódás: ${API_URL} …`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const res = await fetch(API_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const html = await res.text();
+    const data = parseWorkerHTML(html);
+
+    statusDot.className = 'ok';
+    statusText.textContent =
+      `Betöltve · ${data.images.length} kép · ${Object.keys(data.specs).length} műszaki adat · Forrás: dummy.viktor56szabo.workers.dev`;
+
+    applyData(data);
+    buildSlides(data.images);
+
+  } catch (err) {
+    statusDot.className = 'err';
+    statusText.textContent = `Hiba: ${err.message} – ellenőrizd a Worker CORS beállítását`;
+
+    // Fallback: a repó képeivel fut tovább
+    const fallback = Array.from({ length: 12 }, (_, i) => ({
+      url: RAW_BASE + ['23456794','23456795','23456796','23456797','23456798',
+                       '23456799','23456800','23456802','23456803','23456804',
+                       '23456805','23456806'][i] + '.jpg',
+      caption: `BMW – ${i + 1}. fotó (tartalék mód)`,
+    }));
+    buildSlides(fallback);
+
+    document.getElementById('hero-title-main').textContent = 'BMW – API hiba';
+    document.getElementById('hero-title-sub').textContent  = 'Tartalék mód: GitHub képek';
+  }
+}
+
+load();
+</script>
+</body>
+</html>
