@@ -384,14 +384,6 @@
 </main>
 
 <div class="data-source-banner">
-  <strong>Adatforrás és kockázatkezelés:</strong>
-  Az összes adat és kép futásidőben töltődik be a <strong>dummy.viktor56szabo.workers.dev</strong> Cloudflare Worker API-ból.
-  A HTML oldal maga csak statikus fájl – minden dinamikus tartalom a külső forrásból érkezik.<br>
-  <strong>Kockázatkezelés:</strong>
-  (1) Ha az API nem elérhető (hálózati hiba, Worker leállás), a hibakezelő a státuszsávban jelzi a problémát, és a slideshow üres helyett hibaüzenetet mutat.
-  (2) A HTML-parsolás rugalmasan kezeli a forrás szerkezetének változásait – a képek, árak és adatok külön szelektorokkal kerülnek kinyerésre, ha egy mező hiányzik, az alapértelmezett értékkel helyettesítődik.
-  (3) Az egyes képek <code>onerror</code> eseménnyel egyenként is fallback-elnek.
-  (4) A Worker maga is cacheli a GitHub forrást 5 percre, így egy esetleges upstream kiesés sem okoz azonnali hibát.
 </div>
 
 <footer id="footer">© BMW Slideshow · Forrás: dummy.viktor56szabo.workers.dev · Betöltve: —</footer>
